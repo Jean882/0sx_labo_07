@@ -12,7 +12,7 @@ HCSR04 distanceSensor(trigPin, echoPin);
 const int rPin = 7;
 const int gPin = 6;
 const int bPin = 5;
-const int buzzerPin = 12;
+const int buzzerPin = 13;
 Alarm alarme(rPin, gPin, bPin, buzzerPin, &distance);
 
 // --- Moteur pas-à-pas ---
@@ -32,7 +32,7 @@ void setup() {
   // Configuration alarme
   alarme.setColourA(255, 0, 0);     // Rouge
   alarme.setColourB(0, 0, 255);     // Bleu
-  alarme.setVariationTiming(500);  // Clignote toutes les 500ms
+  alarme.setVariationTiming(300);  // Clignote toutes les 300ms
   alarme.setDistance(15);          // Seuil alarme (cm)
   alarme.setTimeout(3000);         // Délai arrêt alarme
   alarme.turnOn();                 // Démarre alarme
@@ -51,14 +51,12 @@ void loop() {
     lastMeasure = currentMillis;
     distance = distanceSensor.dist();
 
-    Serial.print("Distance: ");
+    Serial.print(" | Distance: ");
     Serial.print(distance);
     Serial.println(" cm");
   }
 
   alarme.update();  // Gestion clignotement et buzzer
   porte.update();   // Gestion ouverture/fermeture
-
-  // Debug
   
 }

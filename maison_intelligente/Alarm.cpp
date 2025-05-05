@@ -9,8 +9,7 @@ Alarm::Alarm(int rPin, int gPin, int bPin, int buzzerPin, float* distancePtr)
   pinMode(_bPin, OUTPUT);
   pinMode(_buzzerPin, OUTPUT);
 
-  _setRGB(0, 0, 0);
-  digitalWrite(_buzzerPin, LOW);
+  _turnOff();
 }
 
 // Couleurs du gyrophare
@@ -56,9 +55,9 @@ AlarmState Alarm::getState() const {
 }
 
 void Alarm::_setRGB(int r, int g, int b) {
-  analogWrite(_rPin, LOW);
-  analogWrite(_gPin, HIGH);
-  analogWrite(_bPin, LOW);
+  analogWrite(_rPin, r);
+  analogWrite(_gPin, g);
+  analogWrite(_bPin, b);
 }
 
 void Alarm::_turnOff() {
@@ -85,7 +84,6 @@ void Alarm::update() {
   }
 }
 
-// État OFF : tout est éteint
 void Alarm::_offState() {
   _turnOff();
   if (_turnOnFlag) {
@@ -94,18 +92,17 @@ void Alarm::_offState() {
   }
 }
 
-// État de surveillance : déclenche si présence détectée
 void Alarm::_watchState() {
-  if (_turnOffFlag) {
-    _turnOffFlag = false;
-    _state = OFF;
-  } else if (*_distance < _distanceTrigger) {
+  if (*_distance <= _distanceTrigger) {
     _state = ON;
-    _lastDetectedTime = _currentTime;
+    _lastDetectedTime = millis();
+    _lastUpdate = millis();
+    _currentColor = false;
+  } else {
+    _turnOff();
   }
 }
 
-// État ON : clignotement des couleurs et buzzer
 void Alarm::_onState() {
   if (_currentTime - _lastUpdate >= _variationRate) {
     _lastUpdate = _currentTime;
@@ -118,12 +115,10 @@ void Alarm::_onState() {
 
     _currentColor = !_currentColor;
 
-    // Active le buzzer par impulsions
     digitalWrite(_buzzerPin, _currentColor);
   }
 
-  // Gère la désactivation après éloignement
-  if (*_distance >= _distanceTrigger) {
+  if (*_distance > _distanceTrigger) {
     if (_currentTime - _lastDetectedTime > _timeoutDelay) {
       _state = WATCHING;
       _turnOff();
@@ -133,10 +128,9 @@ void Alarm::_onState() {
   }
 }
 
-// État de test (simule ON pendant 3 sec)
 void Alarm::_testingState() {
   if (_currentTime - _testStartTime < 3000) {
-    _onState(); // Simule l'état ON
+    _onState();
   } else {
     _state = OFF;
     _turnOff();
